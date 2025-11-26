@@ -1,0 +1,32 @@
+name: max_baza
+description: "A new Flutter project."
+publish_to: "none"
+version: 0.0.6
+
+environment:
+  sdk: ^3.10.0-162.1.beta
+
+dependencies:
+  flutter:
+    sdk: flutter
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  speech_to_text: ^7.3.0
+  excel: ^4.0.3
+  permission_handler: ^11.0.1
+  path_provider: ^2.1.1
+  provider: ^6.1.5+1
+  file_picker: ^10.3.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.13
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/img/
