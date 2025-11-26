@@ -138,11 +138,6 @@ class _AddEntryPageState extends State<AddEntryPage> {
       _carTypeController.clear();
       _phoneController.clear();
       _commentController.clear();
-
-      // Use a post-frame callback to ensure focus is set after build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        FocusScope.of(context).requestFocus(_nameFocus);
-      });
     }
   }
 
