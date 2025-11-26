@@ -8,6 +8,7 @@ class SearchPage extends StatefulWidget {
   final VoidCallback onClearSearch;
   final VoidCallback onExportToExcel;
   final VoidCallback onImportFromExcel;
+  final bool isLandscape;
 
   const SearchPage({
     super.key,
@@ -15,6 +16,7 @@ class SearchPage extends StatefulWidget {
     required this.onClearSearch,
     required this.onExportToExcel,
     required this.onImportFromExcel,
+    this.isLandscape = false,
   });
 
   @override
@@ -51,13 +53,13 @@ class _SearchPageState extends State<SearchPage> {
           aValue = a.name.toLowerCase();
           bValue = b.name.toLowerCase();
           break;
-        case 1: // Company
-          aValue = a.companyName.toLowerCase();
-          bValue = b.companyName.toLowerCase();
-          break;
-        case 2: // Car Number
+        case 1: // Car Number
           aValue = a.carNumber.toLowerCase();
           bValue = b.carNumber.toLowerCase();
+          break;
+        case 2: // Company
+          aValue = a.companyName.toLowerCase();
+          bValue = b.companyName.toLowerCase();
           break;
         case 3: // Car Type
           aValue = a.carType.toLowerCase();
@@ -81,6 +83,19 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     return entries;
+  }
+
+  // Функція для фільтрації записів по всіх полях
+  List<CarEntry> _filterEntries(List<CarEntry> entries, String query) {
+    if (query.isEmpty) return entries;
+
+    final lowerQuery = query.toLowerCase();
+
+    return entries.where((entry) {
+      return entry.carNumber.toLowerCase().contains(lowerQuery) ||
+          entry.name.toLowerCase().contains(lowerQuery) ||
+          entry.companyName.toLowerCase().contains(lowerQuery);
+    }).toList();
   }
 
   // Function to show entry details
@@ -157,10 +172,10 @@ class _SearchPageState extends State<SearchPage> {
         if (widget.searchQuery.isNotEmpty)
           Container(
             padding: const EdgeInsets.all(16),
-            color: Colors.blue.shade50,
+            color: Colors.black,
             child: Row(
               children: [
-                const Icon(Icons.search, color: Colors.blue),
+                const Icon(Icons.search, color: Colors.white),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -184,16 +199,8 @@ class _SearchPageState extends State<SearchPage> {
             builder: (context, Box<CarEntry> box, _) {
               var entries = box.values.toList();
 
-              if (widget.searchQuery.isNotEmpty) {
-                entries = entries
-                    .where(
-                      (e) => e.carNumber.toLowerCase().contains(
-                        widget.searchQuery.toLowerCase(),
-                      ),
-                    )
-                    .toList();
-              }
-
+              // Використовуємо нову функцію фільтрації по всіх полях
+              entries = _filterEntries(entries, widget.searchQuery);
               entries = _sortEntries(entries);
 
               if (entries.isEmpty) {
@@ -216,47 +223,65 @@ class _SearchPageState extends State<SearchPage> {
                           color: Colors.grey.shade600,
                         ),
                       ),
+                      if (widget.searchQuery.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            'Searching in: car number, name, company',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                     ],
                   ),
                 );
               }
+
+              // Компактні розміри для таблиці
+              final double headingFontSize = widget.isLandscape ? 10 : 12;
+              final double dataFontSize = widget.isLandscape ? 10 : 11;
+              final double rowHeight = widget.isLandscape ? 40 : 45;
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SingleChildScrollView(
                   child: DataTable(
                     showCheckboxColumn: false,
-                    dataRowMinHeight: 40,
-                    dataRowMaxHeight: 50,
-                    headingTextStyle: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14, // Менший шрифт заголовків
+                    dataRowMinHeight: rowHeight,
+                    dataRowMaxHeight: rowHeight,
+                    headingRowHeight: 40,
+                    horizontalMargin: 8,
+                    columnSpacing: 4,
+                    headingTextStyle: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: headingFontSize,
+                      color: Colors.white,
                     ),
-                    dataTextStyle: const TextStyle(
-                      fontSize: 20, // Менший шрифт даних
+                    dataTextStyle: TextStyle(
+                      fontSize: dataFontSize,
+                      fontWeight: FontWeight.w400,
                     ),
                     sortColumnIndex: _sortColumnIndex,
                     sortAscending: _sortAscending,
                     columns: [
                       DataColumn(
-                        label: const SizedBox(width: 92, child: Text('NAME')),
+                        label: SizedBox(
+                          width: 70,
+                          child: Text('NAME', overflow: TextOverflow.ellipsis),
+                        ),
                         onSort: (columnIndex, ascending) =>
                             _sort((e) => e.name.toLowerCase(), columnIndex),
                       ),
                       DataColumn(
-                        label: const SizedBox(
-                          width: 70,
-                          child: Text('COMPANY'),
-                        ),
-                        onSort: (columnIndex, ascending) => _sort(
-                          (e) => e.companyName.toLowerCase(),
-                          columnIndex,
-                        ),
-                      ),
-                      DataColumn(
-                        label: const SizedBox(
-                          width: 70,
-                          child: Text('CAR NUMBER'),
+                        label: SizedBox(
+                          width: 80,
+                          child: Text(
+                            'CAR NUMBER',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         onSort: (columnIndex, ascending) => _sort(
                           (e) => e.carNumber.toLowerCase(),
@@ -264,153 +289,191 @@ class _SearchPageState extends State<SearchPage> {
                         ),
                       ),
                       DataColumn(
-                        label: const SizedBox(
+                        label: SizedBox(
                           width: 70,
-                          child: Text('CAR TYPE'),
+                          child: Text(
+                            'COMPANY',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        onSort: (columnIndex, ascending) => _sort(
+                          (e) => e.companyName.toLowerCase(),
+                          columnIndex,
+                        ),
+                      ),
+                      DataColumn(
+                        label: SizedBox(
+                          width: 60,
+                          child: Text('TYPE', overflow: TextOverflow.ellipsis),
                         ),
                         onSort: (columnIndex, ascending) =>
                             _sort((e) => e.carType.toLowerCase(), columnIndex),
                       ),
                       DataColumn(
-                        label: const SizedBox(width: 92, child: Text('PHONE')),
+                        label: SizedBox(
+                          width: 80,
+                          child: Text('PHONE', overflow: TextOverflow.ellipsis),
+                        ),
                         onSort: (columnIndex, ascending) =>
                             _sort((e) => e.phoneNumber, columnIndex),
                       ),
                       DataColumn(
-                        label: const SizedBox(
-                          width: 30,
-                          child: Text('COMMENT'),
+                        label: SizedBox(
+                          width: 90,
+                          child: Text(
+                            'COMMENT',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         onSort: (columnIndex, ascending) =>
                             _sort((e) => e.comment.toLowerCase(), columnIndex),
                       ),
-                      const DataColumn(
-                        label: SizedBox(width: 92, child: Text('ACTIONS')),
+                      DataColumn(
+                        label: SizedBox(
+                          width: 70,
+                          child: Text(
+                            'ACTIONS',
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       ),
                     ],
-                    rows: entries.map((entry) {
+                    rows: entries.asMap().entries.map((entryWithIndex) {
+                      final index = entryWithIndex.key;
+                      final entry = entryWithIndex.value;
+
+                      // Альтернуючі кольори для рядків
+                      final bool isEven = index % 2 == 0;
+                      final Color rowColor = isEven
+                          ? Colors.grey.shade900.withOpacity(0.3)
+                          : Colors.grey.shade800.withOpacity(0.2);
+
                       return DataRow(
+                        color: WidgetStateProperty.resolveWith<Color>((
+                          Set<WidgetState> states,
+                        ) {
+                          if (states.contains(WidgetState.hovered)) {
+                            return Colors.blueGrey.withOpacity(0.3);
+                          }
+                          return rowColor;
+                        }),
                         onSelectChanged: (_) {
                           _showEntryDetails(entry);
                         },
                         cells: [
                           DataCell(
-                            SizedBox(
-                              width: 70,
+                            Tooltip(
+                              message: entry.name.toUpperCase(),
                               child: Text(
                                 entry.name.toUpperCase(),
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16),
+                                style: TextStyle(fontSize: dataFontSize),
                               ),
                             ),
                           ),
                           DataCell(
-                            SizedBox(
-                              width: 70,
-                              child: Text(
-                                entry.companyName.toUpperCase(),
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ),
-                          DataCell(
-                            SizedBox(
-                              width: 70,
+                            Tooltip(
+                              message: entry.carNumber.toUpperCase(),
                               child: Text(
                                 entry.carNumber.toUpperCase(),
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16),
+                                style: TextStyle(fontSize: dataFontSize),
                               ),
                             ),
                           ),
                           DataCell(
-                            SizedBox(
-                              width: 70,
+                            Tooltip(
+                              message: entry.companyName.toUpperCase(),
+                              child: Text(
+                                entry.companyName.toUpperCase(),
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(fontSize: dataFontSize),
+                              ),
+                            ),
+                          ),
+                          DataCell(
+                            Tooltip(
+                              message: entry.carType.toUpperCase(),
                               child: Text(
                                 entry.carType.toUpperCase(),
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16),
+                                style: TextStyle(fontSize: dataFontSize),
                               ),
                             ),
                           ),
                           DataCell(
-                            SizedBox(
-                              width: 70,
+                            Tooltip(
+                              message: entry.phoneNumber.toUpperCase(),
                               child: Text(
                                 entry.phoneNumber.toUpperCase(),
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 16),
+                                style: TextStyle(fontSize: dataFontSize),
                               ),
                             ),
                           ),
                           DataCell(
-                            SizedBox(
-                              width: 30,
+                            Tooltip(
+                              message: entry.comment.toUpperCase(),
                               child: Text(
                                 entry.comment.toUpperCase(),
                                 overflow: TextOverflow.ellipsis,
-                                maxLines: 2,
-                                style: const TextStyle(fontSize: 16),
+                                maxLines: 1,
+                                style: TextStyle(fontSize: dataFontSize),
                               ),
                             ),
                           ),
                           DataCell(
-                            SizedBox(
-                              width: 100,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      color: Colors.blue,
-                                      size: 18, // Менші іконки
-                                    ),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              EditEntryPage(entry: entry),
-                                        ),
-                                      );
-                                    },
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.edit,
+                                    color: Colors.blue.shade300,
+                                    size: 16,
                                   ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                      size: 18, // Менші іконки
-                                    ),
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (ctx) => AlertDialog(
-                                          title: const Text('DELETE RECORD?'),
-                                          content: Text(
-                                            'DELETE RECORD FOR ${entry.carNumber.toUpperCase()}?',
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            EditEntryPage(entry: entry),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: Colors.red.shade300,
+                                    size: 16,
+                                  ),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (ctx) => AlertDialog(
+                                        title: const Text('DELETE RECORD?'),
+                                        content: Text(
+                                          'DELETE RECORD FOR ${entry.carNumber.toUpperCase()}?',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx),
+                                            child: const Text('CANCEL'),
                                           ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(ctx),
-                                              child: const Text('CANCEL'),
-                                            ),
-                                            TextButton(
-                                              onPressed: () {
-                                                entry.delete();
-                                                Navigator.pop(ctx);
-                                              },
-                                              child: const Text('DELETE'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
+                                          TextButton(
+                                            onPressed: () {
+                                              entry.delete();
+                                              Navigator.pop(ctx);
+                                            },
+                                            child: const Text('DELETE'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ),
                           ),
                         ],
